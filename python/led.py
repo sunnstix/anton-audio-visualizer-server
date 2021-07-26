@@ -4,11 +4,51 @@ from __future__ import division
 import platform
 import numpy as np
 import config
+from queue import Queue
+
+
+class SerialBuffer(Queue):
+
+    def __init__(self,maxsize,push_freq):
+        super().__init__(maxsize)
+        self.push_freq = push_freq
+    
+    def serialize(self,ser):
+        from threading import Thread 
+        t = Thread(target = self.__buffer, args=(ser,))
+        t.start()
+
+    def __buffer(self,ser):
+        from time import sleep
+        separator = memoryview(b'\xf9\x8f')
+        size = 0
+        while True:
+            try:
+                ser.write(self.get(block=True,timeout=1))
+                size += 1
+                if size >= self.push_freq:
+                    ser.write(separator)
+                    size = 0
+                    sleep(0.02)
+            except Exception:
+                continue
 
 # ESP8266 uses WiFi communication
 if config.DEVICE == 'esp8266':
     import socket
     _sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+buffer = SerialBuffer(2000, 5)
+
+# Serial Arduino uses Serial Port
+if config.DEVICE == 'serial':
+    import serial
+    from time import sleep
+    ser = serial.Serial(config.SERIAL_PORT, config.BAUD_RATE, timeout=config.SERIAL_TIMEOUT)
+    ser.flush()
+    buffer.serialize(ser)
+    sleep(1)
+
 # Raspberry Pi controls the LED strip directly
 elif config.DEVICE == 'pi':
     from rpi_ws281x import *
@@ -37,8 +77,10 @@ _gamma = np.load(config.GAMMA_TABLE_PATH)
 _prev_pixels = np.tile(253, (3, config.N_PIXELS))
 """Pixel values that were most recently displayed on the LED strip"""
 
-pixels = np.tile(1, (3, config.N_PIXELS))
+pixels = np.tile(0, (3, config.N_PIXELS))
 """Pixel values for the LED strip"""
+
+_prev_pixels = np.copy(pixels)
 
 _is_python_2 = int(platform.python_version_tuple()[0]) == 2
 
@@ -80,6 +122,22 @@ def _update_esp8266():
                 m.append(p[2][i])  # Pixel blue value
         m = m if _is_python_2 else bytes(m)
         _sock.sendto(m, (config.UDP_IP, config.UDP_PORT))
+    _prev_pixels = np.copy(p)
+
+def _update_serial():
+    global pixels, _prev_pixels, buffer
+    # Truncate values and cast to integer
+    pixels = np.clip(pixels, 0, 255).astype(np.uint8)
+    # Optionally apply gamma correc tio
+    p = _gamma[pixels] if config.SOFTWARE_GAMMA_CORRECTION else np.copy(pixels)
+    # Pixel indices
+
+    idx = range(pixels.shape[1])
+    idx = [i for i in idx if not np.array_equal(p[:, i], _prev_pixels[:, i])]
+    for i in idx:
+        #data = bytearray(pixels[:,i].tobytes()) + bytearray(i.to_bytes(2,'little'))
+        data = bytearray(np.arange(5).tobytes())
+        buffer.put_nowait(data)
     _prev_pixels = np.copy(p)
 
 
@@ -140,12 +198,15 @@ def update():
     """Updates the LED strip values"""
     if config.DEVICE == 'esp8266':
         _update_esp8266()
+    elif config.DEVICE == 'serial':
+        _update_serial()
     elif config.DEVICE == 'pi':
         _update_pi()
     elif config.DEVICE == 'blinkstick':
         _update_blinkstick()
     else:
         raise ValueError('Invalid device selected')
+
 
 
 # Execute this file to run a LED strand test
@@ -156,10 +217,10 @@ if __name__ == '__main__':
     # Turn all pixels off
     pixels *= 0
     pixels[0, 0] = 255  # Set 1st pixel red
-    pixels[1, 1] = 255  # Set 2nd pixel green
+    pixels[1, 1] = 0  # Set 2nd pixel green
     pixels[2, 2] = 255  # Set 3rd pixel blue
     print('Starting LED strand test')
     while True:
         pixels = np.roll(pixels, 1, axis=1)
         update()
-        time.sleep(.1)
+        time.sleep(0.2)

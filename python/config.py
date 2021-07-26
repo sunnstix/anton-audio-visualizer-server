@@ -3,9 +3,9 @@ from __future__ import print_function
 from __future__ import division
 import os
 
-DEVICE = 'pi'
+DEVICE = 'serial'
 
-"""Device used to control LED strip. Must be 'pi',  'esp8266' or 'blinkstick'
+"""Device used to control LED strip. Must be 'pi',  'esp8266', 'serial' or 'blinkstick'
 
 'esp8266' means that you are using an ESP8266 module to control the LED strip
 and commands will be sent to the ESP8266 over WiFi.
@@ -22,6 +22,16 @@ if DEVICE == 'esp8266':
     """IP address of the ESP8266. Must match IP in ws2812_controller.ino"""
     UDP_PORT = 7777
     """Port number used for socket communication between Python and ESP8266"""
+    SOFTWARE_GAMMA_CORRECTION = False
+    """Set to False because the firmware handles gamma correction + dither"""
+
+if DEVICE == 'serial':
+    SERIAL_PORT = '/dev/ttyACM1'
+    """Check which serial port the Arduino board is connected over (ls /dev/tty*)"""
+    BAUD_RATE = 10000
+    """Must match Baud rate for Arduino"""
+    SERIAL_TIMEOUT = 1
+    """Serial Communication timeout to prevent dirty reads"""
     SOFTWARE_GAMMA_CORRECTION = False
     """Set to False because the firmware handles gamma correction + dither"""
 
@@ -49,7 +59,7 @@ USE_GUI = False
 DISPLAY_FPS = True
 """Whether to display the FPS when running (can reduce performance)"""
 
-N_PIXELS = 144
+N_PIXELS = 300
 """Number of pixels in the LED strip (must match ESP8266 firmware)"""
 
 GAMMA_TABLE_PATH = os.path.join(os.path.dirname(__file__), 'gamma_table.npy')
