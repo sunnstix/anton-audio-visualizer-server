@@ -3,7 +3,7 @@ from __future__ import print_function
 from __future__ import division
 import os
 
-DEVICE = 'serial'
+DEVICE = 'esp8266'
 
 """Device used to control LED strip. Must be 'pi',  'esp8266', 'serial' or 'blinkstick'
 
@@ -18,14 +18,14 @@ to control the leds connected to it.
 """
 
 if DEVICE == 'esp8266':
-    UDP_IP = '192.168.0.150'
+    UDP_IP = '10.0.0.248'
     """IP address of the ESP8266. Must match IP in ws2812_controller.ino"""
-    UDP_PORT = 7777
+    UDP_PORT = 6969
     """Port number used for socket communication between Python and ESP8266"""
     SOFTWARE_GAMMA_CORRECTION = False
     """Set to False because the firmware handles gamma correction + dither"""
 
-if DEVICE == 'serial':
+elif DEVICE == 'serial':
     SERIAL_PORT = '/dev/ttyACM1'
     """Check which serial port the Arduino board is connected over (ls /dev/tty*)"""
     BAUD_RATE = 10000
@@ -35,7 +35,7 @@ if DEVICE == 'serial':
     SOFTWARE_GAMMA_CORRECTION = False
     """Set to False because the firmware handles gamma correction + dither"""
 
-if DEVICE == 'pi':
+elif DEVICE == 'pi':
     LED_PIN = 18
     """GPIO pin connected to the LED strip pixels (must support PWM)"""
     LED_FREQ_HZ = 800000
@@ -49,7 +49,7 @@ if DEVICE == 'pi':
     SOFTWARE_GAMMA_CORRECTION = True
     """Set to True because Raspberry Pi doesn't use hardware dithering"""
 
-if DEVICE == 'blinkstick':
+elif DEVICE == 'blinkstick':
     SOFTWARE_GAMMA_CORRECTION = True
     """Set to True because blinkstick doesn't use hardware dithering"""
 
@@ -59,7 +59,7 @@ USE_GUI = False
 DISPLAY_FPS = True
 """Whether to display the FPS when running (can reduce performance)"""
 
-N_PIXELS = 300
+N_PIXELS = 60
 """Number of pixels in the LED strip (must match ESP8266 firmware)"""
 
 GAMMA_TABLE_PATH = os.path.join(os.path.dirname(__file__), 'gamma_table.npy')

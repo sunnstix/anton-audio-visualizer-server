@@ -77,12 +77,10 @@ _gamma = np.load(config.GAMMA_TABLE_PATH)
 _prev_pixels = np.tile(253, (3, config.N_PIXELS))
 """Pixel values that were most recently displayed on the LED strip"""
 
-pixels = np.tile(0, (3, config.N_PIXELS))
+pixels = np.tile(1, (3, config.N_PIXELS))
 """Pixel values for the LED strip"""
 
-_prev_pixels = np.copy(pixels)
-
-_is_python_2 = int(platform.python_version_tuple()[0]) == 2
+_is_python_2 = False
 
 def _update_esp8266():
     """Sends UDP packets to ESP8266 to update LED strip values
@@ -104,24 +102,25 @@ def _update_esp8266():
     pixels = np.clip(pixels, 0, 255).astype(int)
     # Optionally apply gamma correc tio
     p = _gamma[pixels] if config.SOFTWARE_GAMMA_CORRECTION else np.copy(pixels)
-    MAX_PIXELS_PER_PACKET = 126
+    MAX_PIXELS_PER_PACKET = 128
     # Pixel indices
     idx = range(pixels.shape[1])
     idx = [i for i in idx if not np.array_equal(p[:, i], _prev_pixels[:, i])]
     n_packets = len(idx) // MAX_PIXELS_PER_PACKET + 1
     idx = np.array_split(idx, n_packets)
     for packet_indices in idx:
-        m = '' if _is_python_2 else []
+        m = '' if _is_python_2 else b''
         for i in packet_indices:
             if _is_python_2:
                 m += chr(i) + chr(p[0][i]) + chr(p[1][i]) + chr(p[2][i])
             else:
-                m.append(i)  # Index of pixel to change
-                m.append(p[0][i])  # Pixel red value
-                m.append(p[1][i])  # Pixel green value
-                m.append(p[2][i])  # Pixel blue value
-        m = m if _is_python_2 else bytes(m)
-        _sock.sendto(m, (config.UDP_IP, config.UDP_PORT))
+                red = (int(p[0][i]) & 254) << 24
+                green = (int(p[1][i]) & 254) << 17
+                blue = (int(p[2][i]) & 254) << 10
+                index = int(i) & 2047
+                m += (red+green+blue+index).to_bytes(4,'big')
+        if len(m):
+            _sock.sendto(m, (config.UDP_IP, config.UDP_PORT))
     _prev_pixels = np.copy(p)
 
 def _update_serial():
@@ -217,10 +216,10 @@ if __name__ == '__main__':
     # Turn all pixels off
     pixels *= 0
     pixels[0, 0] = 255  # Set 1st pixel red
-    pixels[1, 1] = 0  # Set 2nd pixel green
+    pixels[1, 1] = 255 # Set 2nd pixel green
     pixels[2, 2] = 255  # Set 3rd pixel blue
     print('Starting LED strand test')
     while True:
         pixels = np.roll(pixels, 1, axis=1)
         update()
-        time.sleep(0.2)
+        time.sleep(0.05)
