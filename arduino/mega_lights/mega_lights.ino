@@ -1,8 +1,7 @@
 
 
 #include <NeoPixelBus.h>
-#include <WiFiEsp.h>
-#include <WiFiEspUdp.h>
+#include <WiFiEspAT.h>
 
 // Emulate Serial1 on pins 6/7 if not present
 #ifndef HAVE_HWSERIAL3
@@ -15,7 +14,7 @@ SoftwareSerial Serial3(6, 7); // RX, TX
 // Set to the number of LEDs in your LED strip
 #define NUM_LEDS 300
 // Maximum number of packets to hold in the buffer. Don't change this.
-#define BUFFER_LEN 1024
+#define BUFFER_LEN 2048
 // LED Pin
 #define LED_PIN 7
 
@@ -23,9 +22,9 @@ const char ssid[] = "7th Doug TH~2.4GHz";            // your network SSID (name)
 const char pass[] = "#ZBJJJMS42";        // your network password
 int status = WL_IDLE_STATUS;     // the Wifi radio's status
 
-char packetBuffer[BUFFER_LEN];
+uint8_t packetBuffer[BUFFER_LEN];
 
-WiFiEspUDP Udp;
+WiFiUDP Udp;
 
 // LED strip
 NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> ledstrip(NUM_LEDS, LED_PIN);
@@ -69,6 +68,12 @@ void setup() {
   
   Serial.print("Listening on port ");
   Serial.println(PORT);
+  RgbColor off(0,0,0);
+  for (int i = 0; i < NUM_LEDS; ++i) {
+    ledstrip.SetPixelColor(i, off);
+  }
+  ledstrip.Show();
+  
 }
 
 void loop() {
@@ -76,30 +81,19 @@ void loop() {
   int packetSize = Udp.parsePacket();
   
   if (packetSize) {
-    Serial.println("Received packet From ");
-    IPAddress remoteIp = Udp.remoteIP();
-    Serial.print(remoteIp);
 
     // read the packet into packetBuffer
     int len = Udp.read(packetBuffer, BUFFER_LEN);
     for(int i = 0; i+3 < len; i+=4) {
-      //assumes 7 bit color values sent and rescales
-      const uint8_t red = packetBuffer[i] && 14; // doubles value recieved and ignores last bit
-      const uint8_t green = ((packetBuffer[i] && 1) << 3) + ((packetBuffer[i+1] && 12) >> 1);
-      const uint8_t blue  = ((packetBuffer[i+1] && 3) << 2) + ((packetBuffer[i+2] && 8) >> 2);
-      const uint32_t index = (packetBuffer[i+2] && 7) + packetBuffer[i+3];
-
-      Serial.print("Index: ");
-      Serial.print(index);
-      Serial.print("\tRed: ");
-      Serial.print(red);
-      Serial.print("\tGreen: ");
-      Serial.print(green);
-      Serial.print("\tBlue: ");
-      Serial.println(blue);
-
-      RgbColor pixel(green, red, blue);
-      ledstrip.SetPixelColor(index, pixel);
+      //assumes 7 bit color values sent and rescale . s
+      const uint8_t red = (packetBuffer[i] & 254); // doubles value recieved and ignores last bit
+      const uint8_t green = ((packetBuffer[i] & 1) << 7) + ((packetBuffer[i+1] & 252) >> 1);
+      const uint8_t blue  = ((packetBuffer[i+1] & 3) << 6) + ((packetBuffer[i+2] & 248) >> 2);
+      const uint32_t index = ((packetBuffer[i+2] & 7)<<8) + packetBuffer[i+3];
+      
+      RgbColor pixel(red,green, blue);
+      for (int p = index * 5; p < 5*index + 5; ++p)
+        ledstrip.SetPixelColor(p, pixel);
     } 
     ledstrip.Show();
   }
