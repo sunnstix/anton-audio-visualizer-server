@@ -108,6 +108,11 @@ def _update_esp8266():
     idx = [i for i in idx if not np.array_equal(p[:, i], _prev_pixels[:, i])]
     n_packets = len(idx) // MAX_PIXELS_PER_PACKET + 1
     idx = np.array_split(idx, n_packets)
+    
+    # temp_p = np.copy(p)
+    
+    # p = np.append(np.flip(p[:,:30],axis = 1),np.flip(p[:,30:], axis = 1), axis = 1)
+    
     for packet_indices in idx:
         m = '' if _is_python_2 else b''
         for i in packet_indices:
@@ -121,6 +126,9 @@ def _update_esp8266():
                 m += (red+green+blue+index).to_bytes(4,'big')
         if len(m):
             _sock.sendto(m, (config.UDP_IP, config.UDP_PORT))
+            
+    # p = np.copy(temp_p)
+    # assert(p.all()==temp_p.all())
     _prev_pixels = np.copy(p)
 
 def _update_serial():

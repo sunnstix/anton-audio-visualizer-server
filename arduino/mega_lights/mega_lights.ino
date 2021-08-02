@@ -85,7 +85,7 @@ void loop() {
     // read the packet into packetBuffer
     int len = Udp.read(packetBuffer, BUFFER_LEN);
     for(int i = 0; i+3 < len; i+=4) {
-      //assumes 7 bit color values sent and rescale . s
+      //assumes 7 bit color values sent and rescale
       const uint8_t red = (packetBuffer[i] & 254); // doubles value recieved and ignores last bit
       const uint8_t green = ((packetBuffer[i] & 1) << 7) + ((packetBuffer[i+1] & 252) >> 1);
       const uint8_t blue  = ((packetBuffer[i+1] & 3) << 6) + ((packetBuffer[i+2] & 248) >> 2);
@@ -94,7 +94,7 @@ void loop() {
       RgbColor pixel(red,green, blue);
       for (int p = index * 5; p < 5*index + 5; ++p)
         ledstrip.SetPixelColor(p, pixel);
-    } 
+    }
     ledstrip.Show();
   }
 }
