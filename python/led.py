@@ -100,21 +100,17 @@ def _update_esp8266():
     global pixels, _prev_pixels
     # Truncate values and cast to integer
     pixels = np.clip(pixels, 0, 255).astype(int)
-    # Optionally apply gamma correc tio
+    # Optionally apply gamma correction
     p = _gamma[pixels] if config.SOFTWARE_GAMMA_CORRECTION else np.copy(pixels)
-    MAX_PIXELS_PER_PACKET = 128
+    MAX_PIXELS_PER_PACKET = 127
     # Pixel indices
     idx = range(pixels.shape[1])
     idx = [i for i in idx if not np.array_equal(p[:, i], _prev_pixels[:, i])]
     n_packets = len(idx) // MAX_PIXELS_PER_PACKET + 1
     idx = np.array_split(idx, n_packets)
     
-    # temp_p = np.copy(p)
-    
-    # p = np.append(np.flip(p[:,:30],axis = 1),np.flip(p[:,30:], axis = 1), axis = 1)
-    
     for packet_indices in idx:
-        m = '' if _is_python_2 else b''
+        m = b'\x03'
         for i in packet_indices:
             if _is_python_2:
                 m += chr(i) + chr(p[0][i]) + chr(p[1][i]) + chr(p[2][i])
@@ -127,8 +123,6 @@ def _update_esp8266():
         if len(m):
             _sock.sendto(m, (config.UDP_IP, config.UDP_PORT))
             
-    # p = np.copy(temp_p)
-    # assert(p.all()==temp_p.all())
     _prev_pixels = np.copy(p)
 
 def _update_serial():
@@ -213,7 +207,12 @@ def update():
         _update_blinkstick()
     else:
         raise ValueError('Invalid device selected')
+    
+def shutdown():
+    _sock.sendto(b'\x00', (config.UDP_IP, config.UDP_PORT))
 
+def rainbow():
+    _sock.sendto(b'\x02', (config.UDP_IP,config.UDP_PORT))
 
 
 # Execute this file to run a LED strand test
@@ -230,4 +229,4 @@ if __name__ == '__main__':
     while True:
         pixels = np.roll(pixels, 1, axis=1)
         update()
-        time.sleep(0.05)
+        time.sleep(1)
