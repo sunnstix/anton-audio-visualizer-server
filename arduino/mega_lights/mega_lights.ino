@@ -1,6 +1,8 @@
 
-
 #include <NeoPixelBus.h>
+#include "Animator.h"
+#include "Animations.h"
+
 #include <WiFiEspAT.h>
 
 // Emulate Serial1 on pins 6/7 if not present
@@ -13,29 +15,38 @@ SoftwareSerial Serial3(6, 7); // RX, TX
 #define PORT 6969
 // Set to the number of LEDs in your LED strip
 #define NUM_LEDS 300
-// Maximum number of packets to hold in the buffer. Don't change this.
-#define BUFFER_LEN 2048
+// Maximum number of packet bytes to hold in the buffer. Don't change this.
+#define BUFFER_LEN 1024
 // LED Pin
 #define LED_PIN 7
+// Num Animations
+#define NUM_ANIMS 1
 
-const char ssid[] = "7th Doug TH~2.4GHz";            // your network SSID (name)
-const char pass[] = "#ZBJJJMS42";        // your network password
-int status = WL_IDLE_STATUS;     // the Wifi radio's status
+// Wifi Information (Never Going to reuse this password or ssid)
+const char ssid[] = "7th Doug TH~2.4GHz"; // your network SSID (name)
+const char pass[] = "#ZBJJJMS42";         // your network password
+int status = WL_IDLE_STATUS;              // the Wifi radio's status
 
-uint8_t packetBuffer[BUFFER_LEN];
-
+// UDP protocol for ESP8266
 WiFiUDP Udp;
+int latestRead;
+uint8_t packetBuffer[BUFFER_LEN];
 
 // LED strip
 NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> ledstrip(NUM_LEDS, LED_PIN);
 
+// Animation Manager
+Animator animator; // NeoPixel animation management object
+LightMode currMode;
+
 // raspi IP
-IPAddress ip(10,0,0,248);
+IPAddress ip(10, 0, 0, 248);
 // router gateway
 IPAddress gateway(192, 168, 0, 1);
 IPAddress subnet(255, 255, 255, 0);
 
-void setup() {
+void setup()
+{
   // initialize serial for debugging
   Serial.begin(115200);
   // initialize serial for ESP module
@@ -44,63 +55,85 @@ void setup() {
   WiFi.init(&Serial3);
 
   // check for the presence of the shield:
-  if (WiFi.status() == WL_NO_SHIELD) {
+  if (WiFi.status() == WL_NO_SHIELD)
+  {
     Serial.println("WiFi shield not present");
     // don't continue:
-    while (true);
+    while (true)
+      ;
   }
 
   // attempt to connect to WiFi network
-  while ( status != WL_CONNECTED) {
+  while (status != WL_CONNECTED)
+  {
     Serial.print("Attempting to connect to WPA SSID: ");
     Serial.println(ssid);
     // Connect to WPA/WPA2 network
     WiFi.config(ip);
     status = WiFi.begin(ssid, pass);
   }
-  
+
   Serial.println("Connected to wifi");
   printWifiStatus();
 
   Serial.println("\nStarting connection to server...");
   // if you get a connection, report back via serial:
   Udp.begin(PORT);
-  
+
   Serial.print("Listening on port ");
   Serial.println(PORT);
-  RgbColor off(0,0,0);
-  for (int i = 0; i < NUM_LEDS; ++i) {
-    ledstrip.SetPixelColor(i, off);
-  }
-  ledstrip.Show();
-  
+
+  ledstrip.Begin();
+  currMode = LightMode::OffMode;
+  animator.StartAnimation(new OffAnimation());
 }
 
-void loop() {
+void loop()
+{
   // if there's data available, read a packet
   int packetSize = Udp.parsePacket();
-  
-  if (packetSize) {
-
+  latestRead = 0;
+  if (packetSize)
+  {
     // read the packet into packetBuffer
-    int len = Udp.read(packetBuffer, BUFFER_LEN);
-    for(int i = 0; i+3 < len; i+=4) {
-      //assumes 7 bit color values sent and rescale
-      const uint8_t red = (packetBuffer[i] & 254); // doubles value recieved and ignores last bit
-      const uint8_t green = ((packetBuffer[i] & 1) << 7) + ((packetBuffer[i+1] & 252) >> 1);
-      const uint8_t blue  = ((packetBuffer[i+1] & 3) << 6) + ((packetBuffer[i+2] & 248) >> 2);
-      const uint32_t index = ((packetBuffer[i+2] & 7)<<8) + packetBuffer[i+3];
-      
-      RgbColor pixel(red,green, blue);
-      for (int p = index * 5; p < 5*index + 5; ++p)
-        ledstrip.SetPixelColor(p, pixel);
+    latestRead = Udp.read(packetBuffer, BUFFER_LEN);
+
+    LightMode packetMode = static_cast<LightMode>(packetBuffer[0]);
+    if (packetMode != currMode || packetMode == LightMode::StrobeMode || packetMode == LightMode::SolidMode)
+    {
+      if (packetMode < LightMode::InvalidMode)
+        currMode = packetMode;
+      switch (packetMode)
+      {
+      case LightMode::OffMode:
+        animator.StartAnimation(new OffAnimation());
+        break;
+      case LightMode::SolidMode:
+        if (latestRead >=4)
+          animator.StartAnimation(new SolidAnimation(RgbColor(packetBuffer[1],packetBuffer[2],packetBuffer[3])));
+        break;
+      case LightMode::RotateRainbowMode:
+        animator.StartAnimation(new RotatingRainbowAnimation());
+        break;
+      case LightMode::AudioMode:
+        animator.StartAnimation(new AudioRecieverAnimation(packetBuffer,latestRead));
+        break;
+      case LightMode::StrobeMode:
+        if (latestRead >=4)
+          animator.StartAnimation(new StrobeAnimation(RgbColor(packetBuffer[1],packetBuffer[2],packetBuffer[3])));
+        break;
+      default:
+        break;
+      }
     }
-    ledstrip.Show();
+
   }
+
+  animator.UpdateAnimation();
 }
 
-
-void printWifiStatus() {
+void printWifiStatus()
+{
   // print the SSID of the network you're attached to:
   Serial.print("SSID: ");
   Serial.println(WiFi.SSID());

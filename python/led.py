@@ -213,6 +213,10 @@ def shutdown():
 
 def rainbow():
     _sock.sendto(b'\x02', (config.UDP_IP,config.UDP_PORT))
+    
+def strobe(red :int, green :int, blue: int):
+    m = b'\x04' + red.to_bytes(1,'big') + green.to_bytes(1,'big') + blue.to_bytes(1,'big')
+    _sock.sendto(m, (config.UDP_IP,config.UDP_PORT))
 
 
 # Execute this file to run a LED strand test
@@ -226,7 +230,8 @@ if __name__ == '__main__':
     pixels[1, 1] = 255 # Set 2nd pixel green
     pixels[2, 2] = 255  # Set 3rd pixel blue
     print('Starting LED strand test')
-    while True:
-        pixels = np.roll(pixels, 1, axis=1)
-        update()
-        time.sleep(1)
+    shutdown()
+    # while True:
+    #     pixels = np.roll(pixels, 1, axis=1)
+    #     update()
+    #     time.sleep(1)
