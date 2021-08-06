@@ -19,7 +19,7 @@ class GuiThread(QThread):
 
     def run(self):
         self.func()
-        self.progress.emit()
+        self.progress.emit((self.mel, self.pixels))
 
 class VisGUI(pg.GraphicsView):
     
@@ -113,11 +113,9 @@ class VisGUI(pg.GraphicsView):
                             alpha_decay=0.5, alpha_rise=0.99)
         
     def add_thread(self, thread):
-        thread.connect(lambda: print('hi'))
+        thread.connect(self.handler)
 
-    def handler(self):
-        print('handling')
-        return
+    def handler(self, data):
         mel, pixels = data
         if mel is not None:
             x = np.linspace(config.MIN_FREQUENCY, config.MAX_FREQUENCY, len(mel))
