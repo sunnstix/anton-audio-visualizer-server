@@ -1,3 +1,4 @@
+import re
 import anton
 from anton.lights.modes import RgbColor, Lights
 from flask import make_response, jsonify, request, abort
@@ -26,19 +27,20 @@ def not_found(error):
 # Light Mode Requests
 # =======================================================
 
-@anton.app.route('/api/modes/<string:mode>/', methods=['GET','POST']) # change to post request once done
-def set_mode(mode):
+@anton.app.route('/api/modes/', methods=['GET','POST']) # change to post request once done
+def set_light_mode():
+    mode = request.form.get('mode')
     try:
         if mode == 'off':
             lights.lights_off()
         elif mode == 'rotate-rainbow':
             lights.rotate_rainbow()
         elif mode == 'solid-color':
-            lights.solid_color(RgbColor(request.args))
+            lights.solid_color(RgbColor(request.form))
         elif mode == 'strobe':
-            lights.strobe(RgbColor(request.args))
+            lights.strobe(RgbColor(request.form))
         elif mode == 'audio':
-            audio_mode = request.args.get('audio-mode')
+            audio_mode = request.form.get('audio-mode')
             if audio_mode:
                 lights.audio_mode(audio_mode)
         else:

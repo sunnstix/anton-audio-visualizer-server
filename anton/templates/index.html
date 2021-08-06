@@ -1,20 +1,27 @@
-<html lang="en">
-
-<head>
-    <title>
-        Anton: Audio Light Controller
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <!-- <link rel="shortcut icon" href="{{ url_for('static_image', filename='favicon.ico') }}"> -->
-        <meta charset="utf-8">
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    </title>
-</head>
-<body>
-    <h1 class="header">
-        Header
-    </h1>
-    {% block content %}
-    {% endblock %}
-</body>
-
-</html>
+{% extends "base.html" %}
+{% block content %}
+<!-- DO NOT CHANGE THIS -->
+<form action="{{ url_for('set_light_mode') }}" method="post">
+    <div>
+        <select id="mode" name="mode">
+            {% for mode in light_modes %}
+                <option value="{{mode}}">{{mode}}</option>
+            {% endfor %}
+        </select>
+        <label for="mode">Light Mode</label>
+    </div>
+    <div>
+        <input type="color" id="color" name="color" value="#000000">
+        <label for="color">Color</label>
+    </div>
+    <div>
+        <select id="audio-mode" name="audio-mode">
+            {% for mode in audio_modes %}
+                <option value="{{mode}}">{{mode}}</option>
+            {% endfor %}
+        </select>
+        <label for="audio-mode">Audio Mode</label>
+    </div>
+    <div><input type="submit"></div>
+</form>
+{% endblock %}

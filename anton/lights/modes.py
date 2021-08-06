@@ -25,6 +25,11 @@ class RgbColor:
         self.r = flask_args.get('red', default=None, type=int)
         self.g = flask_args.get('green', default=None, type=int)
         self.b = flask_args.get('blue', default=None, type=int)
+        self.color = flask_args.get('color', default=None, type=str)
+        
+        if self.color:
+            self.r, self.g, self.b = tuple(int(self.color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
+        
         if self.r is None or self.g is None or self.g is None:
             raise ValueError
     
