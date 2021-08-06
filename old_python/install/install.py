@@ -73,5 +73,5 @@ def edit_alsa_conf():
 
 
 install_dependencies()
-replace_asound()
+# replace_asound()
 edit_alsa_conf()
