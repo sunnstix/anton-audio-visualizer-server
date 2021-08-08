@@ -16,22 +16,18 @@ def send_arduinos(packet : bytes):
             continue
 
 class RgbColor:
-    def __init__(self,red:int,green:int,blue:int):
-        self.r = red
-        self.g = green
-        self.b = blue
-        
-    def __init__(self,flask_args:dict):
-        self.r = flask_args.get('red', default=None, type=int)
-        self.g = flask_args.get('green', default=None, type=int)
-        self.b = flask_args.get('blue', default=None, type=int)
-        self.color = flask_args.get('color', default=None, type=str)
-        
-        if self.color:
-            self.r, self.g, self.b = tuple(int(self.color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
+    def __init__(self, *args):
+        if len(args) == 1:
+            self.r, self.g, self.b = tuple(int(args[0].lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
+        elif len(args) == 3:
+            self.r, self.g, self.b = args
         
         if self.r is None or self.g is None or self.g is None:
             raise ValueError
+        
+    
+    def to_hex(self):
+        return '#%02x%02x%02x' % (self.r, self.g, self.b)
     
     def to_bytes(self):
         return self.r.to_bytes(1,'big') + self.g.to_bytes(1,'big') + self.b.to_bytes(1,'big')
@@ -40,52 +36,110 @@ class RgbColor:
 # Light Modes
 # =======================================================
 
+class LightMode:
+    def __init__(self, mode_byte : bytes, uses_color : bool = False, submodes : list = list()):
+        self.mode_byte = mode_byte
+        self.color_dep = uses_color
+        self.submodes= submodes
+        
+    def uses_color(self):
+        return self.color_dep
+    
+    def get_submodes(self):
+        return self.submodes
+    
+    def start(self,**kwargs):
+        raise NotImplementedError
+    
+    def stop(self):
+        raise NotImplementedError
+    
+    
+class OffMode(LightMode):
+    def __init__(self,mode_byte : bytes):
+        super().__init__(mode_byte)
+        
+    def start(self,**kwargs):
+        send_arduinos(self.mode_byte)
+        
+    def stop(self):
+        return
+
+class SolidColorMode(LightMode):
+    def __init__(self,mode_byte : bytes):
+        super().__init__(mode_byte, uses_color = True)
+        
+    def start(self, **kwargs):
+        send_arduinos(self.mode_byte + RgbColor(kwargs['color']).to_bytes())
+        
+    def stop(self):
+        return
+    
+class RainbowMode(LightMode):
+    def __init__(self,mode_byte : bytes):
+        super().__init__(mode_byte)
+        
+    def start(self, **kwargs):
+        send_arduinos(self.mode_byte)
+        
+    def stop(self):
+        return
+    
+class AudioMode(LightMode):
+    def __init__(self,mode_byte : bytes):
+        super().__init__(mode_byte, submodes=['scroll', 'spectrum', 'energy'])
+        self.visualizer = Visualizer(send_arduinos,mode_byte)
+        
+    def start(self, **kwargs):
+        self.visualizer.start(kwargs['submode'])
+        
+    def stop(self):
+        self.visualizer.stop()
+        
+class StrobeMode(LightMode):
+    def __init__(self,mode_byte : bytes):
+        super().__init__(mode_byte, uses_color=True)
+        
+    def start(self, **kwargs):
+        send_arduinos(self.mode_byte + RgbColor(kwargs['color']).to_bytes())
+        
+    def stop(self):
+        return
+        
+        
 class Lights():
     
     MODES = {
-        'off': b'\x00',
-        'solid-color': b'\x01',
-        'rotate-rainbow': b'\x02',
-        'audio': b'\x03',
-        'strobe': b'\x04'
+        'off': OffMode(b'\x00'),
+        'solid-color': SolidColorMode(b'\x01'),
+        'rainbow': RainbowMode(b'\x02'),
+        'audio': AudioMode(b'\x03'),
+        'strobe': StrobeMode(b'\x04')
     }
     
-    
+    @classmethod
+    def list_modes(self):
+        return {modekey:{'color': mode.uses_color(), 'submodes': mode.get_submodes()} for modekey, mode in Lights.MODES.items()}
     
     def __init__(self):
-        self.CURRENT_MODE = 'off'
-        self.visualizer = Visualizer(send_arduinos,Lights.MODES['audio'])
-        self.lights_off()
+        self.mode = 'off'
+        self.submode = 'scroll'
+        self.color = RgbColor(0,0,0)
+        Lights.MODES[self.mode].start()
 
-    def current_mode(self):
-        return self.CURRENT_MODE
-
-    def lights_off(self):
-        self.kill_audio()
-        self.CURRENT_MODE = 'off'
-        send_arduinos(Lights.MODES['off'])
-
-    def rotate_rainbow(self):
-        self.kill_audio()
-        self.CURRENT_MODE = 'rotate-rainbow'
-        send_arduinos(Lights.MODES['rotate-rainbow'])
+    def get_current_mode(self):
+        return self.mode
+    
+    def get_current_submode(self):
+        return self.submode
+    
+    def get_current_color(self):
+        return self.color.to_hex()
+   
+    def set_mode(self, mode : str, **kwargs):
+        Lights.MODES[self.mode].stop()
+        self.mode = mode
+        self.submode = kwargs.get('submode',self.submode)
+        self.color = self.color if not kwargs.get('color') else RgbColor(kwargs.get('color'))
+        Lights.MODES[self.mode].start(**kwargs)
         
-    def solid_color(self, color : RgbColor):
-        self.kill_audio()
-        self.CURRENT_MODE = 'solid-color'
-        m = Lights.MODES['solid-color'] + color.to_bytes()
-        send_arduinos(m)
-        
-    def audio_mode(self, audio_mode : str):
-        self.kill_audio()
-        self.CURRENT_MODE = 'audio'
-        self.visualizer.start(audio_mode)
-        
-    def kill_audio(self):
-        self.visualizer.stop()
-
-    def strobe(self, color : RgbColor):
-        self.kill_audio()
-        self.CURRENT_MODE = 'strobe'
-        m = Lights.MODES['strobe'] + color.to_bytes()
-        send_arduinos(m)

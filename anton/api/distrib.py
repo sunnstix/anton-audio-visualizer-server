@@ -1,4 +1,4 @@
-import re
+import json
 import anton
 from anton.lights.modes import RgbColor, Lights
 from flask import make_response, jsonify, request, abort
@@ -26,32 +26,27 @@ def not_found(error):
 
 # Light Mode Requests
 # =======================================================
+@anton.app.route('/api/modes/', methods=['GET'])
+def get_light_modes():
+    print('FUCK')
+    return jsonify(
+        {
+            'modes': Lights.list_modes(), 
+            'current_mode': lights.get_current_mode(),
+            'current_submode': lights.get_current_submode(),
+            'current_color': lights.get_current_color(),
+            'url': request.path
+        })
 
-@anton.app.route('/api/modes/', methods=['GET','POST']) # change to post request once done
+@anton.app.route('/api/modes/', methods=['POST'])
 def set_light_mode():
-    mode = request.form.get('mode')
-    try:
-        if mode == 'off':
-            lights.lights_off()
-        elif mode == 'rotate-rainbow':
-            lights.rotate_rainbow()
-        elif mode == 'solid-color':
-            lights.solid_color(RgbColor(request.form))
-        elif mode == 'strobe':
-            lights.strobe(RgbColor(request.form))
-        elif mode == 'audio':
-            audio_mode = request.form.get('audio-mode')
-            if audio_mode:
-                lights.audio_mode(audio_mode)
-        else:
-            abort(400)
-    except ValueError:
-        abort(400)
-    return jsonify({'mode':mode,'url':request.path})
+    lights.set_mode(**request.json)
+    return jsonify({'mode':lights.get_current_mode(),'url':request.path})
 
-@anton.app.route('/api/modes/',methods=['GET'])
-def get_mode():
-    return jsonify({'mode':lights.current_mode(),'url':request.path})
+@anton.app.route('/api/modes/<string:mode>/', methods=['GET','POST']) #debug route
+def set_lights(mode):
+    lights.set_mode(mode, **request.args)
+    return jsonify({'mode':mode,'url':request.path})
 
 # Arduino Updates
 # =======================================================

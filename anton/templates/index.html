@@ -1,27 +1,10 @@
 {% extends "base.html" %}
 {% block content %}
 <!-- DO NOT CHANGE THIS -->
-<form action="{{ url_for('set_light_mode') }}" method="post">
-    <div>
-        <select id="mode" name="mode">
-            {% for mode in light_modes %}
-                <option value="{{mode}}">{{mode}}</option>
-            {% endfor %}
-        </select>
-        <label for="mode">Light Mode</label>
-    </div>
-    <div>
-        <input type="color" id="color" name="color" value="#000000">
-        <label for="color">Color</label>
-    </div>
-    <div>
-        <select id="audio-mode" name="audio-mode">
-            {% for mode in audio_modes %}
-                <option value="{{mode}}">{{mode}}</option>
-            {% endfor %}
-        </select>
-        <label for="audio-mode">Audio Mode</label>
-    </div>
-    <div><input type="submit"></div>
-</form>
+<!-- Mode Chooser -->
+<div id='mode-selector'>
+    Loading ...
+</div>
+<!-- Load JavaScript -->
+<script type="text/javascript" src="{{ url_for('static', filename='js/bundle.js') }}"></script>
 {% endblock %}
