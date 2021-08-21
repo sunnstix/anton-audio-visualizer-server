@@ -311,6 +311,6 @@ if __name__ == '__main__':
     visualizer = Visualizer(send_arduinos,Lights.MODES['audio'])
     visualizer.start('scroll')
     print('Starting Audio Visualization')
-    time.sleep(5)
+    time.sleep(10)
     print('Stopping thread')
     visualizer.stop()

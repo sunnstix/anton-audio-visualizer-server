@@ -1,5 +1,5 @@
 
-#include <NeoPixelBus.h>
+#include <NeoPixelBrightnessBus.h>
 #include "Animator.h"
 #include "Animations.h"
 
@@ -33,7 +33,7 @@ int latestRead;
 uint8_t packetBuffer[BUFFER_LEN];
 
 // LED strip
-NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> ledstrip(NUM_LEDS, LED_PIN);
+NeoPixelBrightnessBus<NeoGrbFeature, Neo800KbpsMethod> ledstrip(NUM_LEDS, LED_PIN);
 
 // Animation Manager
 Animator animator; // NeoPixel animation management object
@@ -98,11 +98,11 @@ void loop()
     // read the packet into packetBuffer
     latestRead = Udp.read(packetBuffer, BUFFER_LEN);
 
+    // retrieve light mode from first byte of message
     LightMode packetMode = static_cast<LightMode>(packetBuffer[0]);
-    if (packetMode != currMode || packetMode == LightMode::StrobeMode || packetMode == LightMode::SolidMode)
-    {
-      if (packetMode < LightMode::InvalidMode)
-        currMode = packetMode;
+
+    // set current light mode if message is valid
+    if (packetMode < LightMode::InvalidMode){
       switch (packetMode)
       {
       case LightMode::OffMode:
@@ -115,18 +115,23 @@ void loop()
       case LightMode::RotateRainbowMode:
         animator.StartAnimation(new RotatingRainbowAnimation());
         break;
-      case LightMode::AudioMode:
-        animator.StartAnimation(new AudioRecieverAnimation(packetBuffer,latestRead));
+      case LightMode::RecieverConfig:
+        animator.StartAnimation(new RecieverAnimation(packetBuffer,latestRead));
+        packetMode = LightMode::RecieverMode; // sets current mode to reciever mode
+        break;
+      case LightMode::RecieverMode:
         break;
       case LightMode::StrobeMode:
         if (latestRead >=4)
           animator.StartAnimation(new StrobeAnimation(RgbColor(packetBuffer[1],packetBuffer[2],packetBuffer[3])));
         break;
       default:
-        break;
+        return; //don't update if message is invalid
       }
-    }
 
+      //update current mode
+      currMode = packetMode;
+    }
   }
 
   animator.UpdateAnimation();
