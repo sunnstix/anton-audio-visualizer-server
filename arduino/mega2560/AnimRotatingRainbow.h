@@ -1,5 +1,5 @@
-#ifndef ROTATINGRAINBOW_H
-#define ROTATINGRAINBOW_H
+#ifndef ANIMROTATINGRAINBOW_H
+#define ANIMROTATINGRAINBOW_H
 
 #include "Animator.h"
 

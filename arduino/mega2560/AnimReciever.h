@@ -1,7 +1,6 @@
-#ifndef RECIEVER_H
-#define RECIEVER_H
+#ifndef ANIMRECIEVER_H
+#define ANIMRECIEVER_H
 
-#include <NeoPixelBrightnessBus.h>
 #include "Animator.h"
 
 using LedStrip = NeoPixelBrightnessBus<NeoGrbFeature, Neo800KbpsMethod>;

@@ -1,5 +1,5 @@
-#ifndef STROBE_H
-#define STROBE_H
+#ifndef ANIMSTROBE_H
+#define ANIMSTROBE_H
 
 #include "Animator.h"
 

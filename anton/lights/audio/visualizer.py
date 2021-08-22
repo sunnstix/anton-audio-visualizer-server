@@ -268,7 +268,6 @@ class Visualizer(Pixels):
             _, mel_y = melbank.get_mels()
             self.mel = np.atleast_2d(YS).T * mel_y.T
             # Scale data to values more suitable for visualization
-            # mel = np.sum(mel, axis=0)
             self.mel = np.sum(self.mel, axis=0)
             self.mel = self.mel**2.0
             # Gain normalization

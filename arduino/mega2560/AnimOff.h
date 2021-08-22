@@ -1,5 +1,5 @@
-#ifndef OFF_H
-#define OFF_H
+#ifndef ANIMOFF_H
+#define ANIMOFF_H
 
 #include "Solid.h"
 

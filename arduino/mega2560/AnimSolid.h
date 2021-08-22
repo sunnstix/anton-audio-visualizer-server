@@ -1,5 +1,5 @@
-#ifndef SOLID_H
-#define SOLID_H
+#ifndef ANIMSOLID_H
+#define ANIMSOLID_H
 
 #include "Animator.h" 
 
