@@ -107,24 +107,9 @@ class Visualizer(Pixels):
         self.thread = None
         
     def start(self,visualization_type):
-        if config.USE_GUI:
-            if visualization_type == "spectrum":
-                GUI.spectrum_click(0)
-            elif visualization_type == "energy":
-                GUI.energy_click(0)
-            elif visualization_type == "scroll":
-                GUI.scroll_click(0)
-            else:
-                raise ValueError
-            
-            self.thread = gui.GuiThread(self.run,self.mel,self.pixels)
-            GUI.add_thread(self.thread.progress)
-            self.thread.start()
-            
-        else: 
-            self.set_effect(visualization_type)
-            self.thread = threading.Thread(target=self.run)
-            self.thread.start()
+        self.set_effect(visualization_type)
+        self.thread = threading.Thread(target=self.run)
+        self.thread.start()
         
     def run(self):
         self.update()
@@ -278,17 +263,6 @@ class Visualizer(Pixels):
             output = self.visualization_effect(self.mel)
             self.pixels = output
             self.update()
-        #     if config.USE_GUI:
-        #         # Plot filterbank output
-        #         x = np.linspace(config.MIN_FREQUENCY, config.MAX_FREQUENCY, len(mel))
-        #         mel_curve.setData(x=x, y=self.fft_plot_filter.update(mel))
-        #         # Plot the color channels
-        #         r_curve.setData(y=self.pixels[0])
-        #         g_curve.setData(y=self.pixels[1])
-        #         b_curve.setData(y=self.pixels[2])
-                
-        # if config.USE_GUI:
-        #     app.processEvents()
         
         if config.DISPLAY_FPS:
             fps = self.__frames_per_second()
@@ -296,14 +270,6 @@ class Visualizer(Pixels):
                 self.prev_fps_update = time.time()
                 print('FPS {:.0f} / {:.0f}'.format(fps, config.FPS))
                 
-
-
-# GUI
-# =======================================================
-
-if config.USE_GUI:
-    import anton.lights.audio.gui as gui
-    GUI = gui.VisGUI(Visualizer.set_effect,melbank)
 
 if __name__ == '__main__':
     from anton.lights.modes import send_arduinos, Lights
