@@ -13,9 +13,11 @@ public:
     {
         // Evaluate Configuration factors
         this->num_zones = packetBuffer[1];
-        this->mirrored = bool((packetBuffer[2] & 8) >> 3);
-        this->rotate = bool((packetBuffer[2] & 4) >> 2);
-        this->pixel_stretch = packetBuffer[3];
+        this->pixel_stretch = packetBuffer[2];
+        // 2 extra bits for configuration
+        this->rotate = bool((packetBuffer[3] & 4) >> 2);
+        this->mirrored = bool((packetBuffer[3] & 8) >> 3);
+        
         this->repetitions = ledstrip.PixelCount() / (num_zones * (1 + this->mirrored) * this->pixel_stretch);
 
         // Clear lights

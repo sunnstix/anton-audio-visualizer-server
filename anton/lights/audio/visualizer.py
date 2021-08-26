@@ -1,11 +1,15 @@
 import time
+from abc import ABCMeta
+import threading
+
 import numpy as np
 from scipy.ndimage.filters import gaussian_filter1d
+
 import anton.lights.config as config
 from anton.lights.audio.audioprocess import AudioProcess
 import anton.lights.audio.dsp as dsp
 from anton.lights.audio.pixels import Pixels
-import threading
+
 
 # Helpers
 # =======================================================
@@ -29,7 +33,6 @@ def memoize(function):
 @memoize
 def _normalized_linspace(size):
     return np.linspace(0, 1, size)
-
 
 def interpolate(y, new_length):
     """Intelligently resizes the array by linearly interpolating the values
@@ -117,17 +120,10 @@ class Visualizer(Pixels):
         
     def stop(self):
         if self.thread is not None:
-            if config.USE_GUI:
-                if self.thread.isRunning():
-                    self.audio_process.kill_stream()
-                    self.thread.quit()
-                    self.thread.wait()
-                    self.audio_process.stop_stream()
-            else:
-                if self.thread.is_alive():
-                    self.audio_process.kill_stream()
-                    self.thread.join()
-                    self.audio_process.stop_stream()
+            if self.thread.is_alive():
+                self.audio_process.kill_stream()
+                self.thread.join()
+                self.audio_process.stop_stream()
     
     def __frames_per_second(self):
         """Return the estimated frames per second

@@ -41,9 +41,9 @@ protected:
   RgbColor bytesToColor(uint8_t *bbuf)
   {
     /* Converts 21 bits in first 3 bytes of buffer to RgbColor Object*/
-    const uint8_t red = *bbuf & 254; // doubles value recieved and ignores last bit
-    const uint8_t green = ((*bbuf & 1) << 7) + ((*(bbuf + 1) & 252) >> 1);
-    const uint8_t blue = ((*(bbuf + 1) & 3) << 6) + ((*(bbuf + 2) & 248) >> 2);
+    const uint8_t red = *bbuf; // doubles value recieved and ignores last bit
+    const uint8_t green = bbuf[1];
+    const uint8_t blue = bbuf[2];
     return RgbColor(red, green, blue);
   }
 
