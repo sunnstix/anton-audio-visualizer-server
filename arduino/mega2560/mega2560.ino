@@ -12,19 +12,17 @@ SoftwareSerial Serial3(6, 7); // RX, TX
 #endif
 
 // local port to listen on
-#define PORT 6969
+#define PORT 5020
 // Set to the number of LEDs in your LED strip
-#define NUM_LEDS 300
+#define NUM_LEDS 280
 // Maximum number of packet bytes to hold in the buffer. Don't change this.
 #define BUFFER_LEN 1024
 // LED Pin
-#define LED_PIN 7
-// Num Animations
-#define NUM_ANIMS 1
+#define LED_PIN 6
 
 // Wifi Information (Never Going to reuse this password or ssid)
-const char ssid[] = "7th Doug TH~2.4GHz"; // your network SSID (name)
-const char pass[] = "#ZBJJJMS42";         // your network password
+const char ssid[] = "RalphsDaycare"; // your network SSID (name)
+const char pass[] = "YourMomsGay";         // your network password
 int status = WL_IDLE_STATUS;              // the Wifi radio's status
 
 // UDP protocol for ESP8266
@@ -40,7 +38,7 @@ Animator animator; // NeoPixel animation management object
 LightMode currMode;
 
 // raspi IP
-IPAddress ip(10, 0, 0, 248);
+IPAddress ip(10,0,0,248);
 // router gateway
 IPAddress gateway(192, 168, 0, 1);
 IPAddress subnet(255, 255, 255, 0);
@@ -63,6 +61,12 @@ void setup()
       ;
   }
 
+  
+
+  ledstrip.Begin();
+  currMode = LightMode::OffMode;
+  animator.StartAnimation(new OffAnimation(&ledstrip));
+
   // attempt to connect to WiFi network
   while (status != WL_CONNECTED)
   {
@@ -70,6 +74,8 @@ void setup()
     Serial.println(ssid);
     // Connect to WPA/WPA2 network
     WiFi.config(ip);
+    WiFi.setHostname("LightController");
+    
     status = WiFi.begin(ssid, pass);
   }
 
@@ -82,10 +88,6 @@ void setup()
 
   Serial.print("Listening on port ");
   Serial.println(PORT);
-
-  ledstrip.Begin();
-  currMode = LightMode::OffMode;
-  animator.StartAnimation(new OffAnimation());
 }
 
 void loop()
@@ -95,35 +97,39 @@ void loop()
   latestRead = 0;
   if (packetSize)
   {
+    Serial.println("Recieved");
     // read the packet into packetBuffer
     latestRead = Udp.read(packetBuffer, BUFFER_LEN);
-
     // retrieve light mode from first byte of message
     LightMode packetMode = static_cast<LightMode>(packetBuffer[0]);
-
+    
     // set current light mode if message is valid
     if (packetMode < LightMode::InvalidMode){
       switch (packetMode)
       {
       case LightMode::OffMode:
-        animator.StartAnimation(new OffAnimation());
+        animator.StartAnimation(new OffAnimation(&ledstrip));
         break;
       case LightMode::SolidMode:
-        if (latestRead >=4)
-          animator.StartAnimation(new SolidAnimation(RgbColor(packetBuffer[1],packetBuffer[2],packetBuffer[3])));
+        if (latestRead == 4) {
+          Serial.println("Solid Mode");
+          animator.StartAnimation(new SolidAnimation(&ledstrip, RgbColor(packetBuffer[1],packetBuffer[2],packetBuffer[3])));
+        }
         break;
       case LightMode::RotateRainbowMode:
-        animator.StartAnimation(new RotatingRainbowAnimation());
+        animator.StartAnimation(new RotatingRainbowAnimation(&ledstrip));
         break;
       case LightMode::RecieverConfig:
-        animator.StartAnimation(new RecieverAnimation(packetBuffer,latestRead));
+        if (latestRead == 4)
+            animator.StartAnimation(new RecieverAnimation(&ledstrip, packetBuffer,latestRead));
         packetMode = LightMode::RecieverMode; // sets current mode to reciever mode
+        latestRead = 0; // prevent animation of configuration bytes
         break;
       case LightMode::RecieverMode:
         break;
       case LightMode::StrobeMode:
-        if (latestRead >=4)
-          animator.StartAnimation(new StrobeAnimation(RgbColor(packetBuffer[1],packetBuffer[2],packetBuffer[3])));
+        if (latestRead ==4)
+          animator.StartAnimation(new StrobeAnimation(&ledstrip, RgbColor(packetBuffer[1],packetBuffer[2],packetBuffer[3])));
         break;
       default:
         return; //don't update if message is invalid
@@ -148,6 +154,11 @@ void printWifiStatus()
   Serial.print("IP Address: ");
   Serial.println(ip);
 
+  Serial.print("Gateway IP Address: ");
+  Serial.println(WiFi.gatewayIP());
+
+  Serial.print("Hostname: ");
+  Serial.println(WiFi.hostname());
   // print the received signal strength:
   long rssi = WiFi.RSSI();
   Serial.print("signal strength (RSSI):");

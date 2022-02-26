@@ -7,14 +7,6 @@ _sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 # Helpers
 # =======================================================
 
-def send_arduinos(packet : bytes):
-    """Sends packets to light controllers."""
-    for ip in config.ARDUINO_IPS:
-        try:
-            _sock.sendto(packet,(ip, config.UDP_PORT))
-        except Exception:
-            continue
-
 class RgbColor:
     def __init__(self, *args):
         if len(args) == 1:
@@ -54,13 +46,21 @@ class LightMode:
     def stop(self):
         raise NotImplementedError
     
+    def send_arduinos(packet : bytes):
+        """Sends packets to light controllers."""
+        for ip in config.ARDUINO_IPS:
+            try:
+                _sock.sendto(packet,(ip, config.UDP_PORT))
+            except Exception:
+                continue
+        
     
 class OffMode(LightMode):
     def __init__(self,mode_byte : bytes):
         super().__init__(mode_byte)
         
     def start(self,**kwargs):
-        send_arduinos(self.mode_byte)
+        self.send_arduinos(self.mode_byte)
         
     def stop(self):
         return
@@ -70,7 +70,7 @@ class SolidColorMode(LightMode):
         super().__init__(mode_byte, uses_color = True)
         
     def start(self, **kwargs):
-        send_arduinos(self.mode_byte + RgbColor(kwargs['color']).to_bytes())
+        self.send_arduinos(self.mode_byte + RgbColor(kwargs['color']).to_bytes())
         
     def stop(self):
         return
@@ -80,7 +80,7 @@ class RainbowMode(LightMode):
         super().__init__(mode_byte)
         
     def start(self, **kwargs):
-        send_arduinos(self.mode_byte)
+        self.send_arduinos(self.mode_byte)
         
     def stop(self):
         return
@@ -88,7 +88,7 @@ class RainbowMode(LightMode):
 class AudioMode(LightMode):
     def __init__(self,mode_byte : bytes):
         super().__init__(mode_byte, submodes=['scroll', 'spectrum', 'energy'])
-        self.visualizer = Visualizer(send_arduinos,mode_byte)
+        self.visualizer = Visualizer(self.send_arduinos,mode_byte)
         
     def start(self, **kwargs):
         self.visualizer.start(kwargs['submode'])
@@ -101,7 +101,7 @@ class StrobeMode(LightMode):
         super().__init__(mode_byte, uses_color=True)
         
     def start(self, **kwargs):
-        send_arduinos(self.mode_byte + RgbColor(kwargs['color']).to_bytes())
+        self.send_arduinos(self.mode_byte + RgbColor(kwargs['color']).to_bytes())
         
     def stop(self):
         return

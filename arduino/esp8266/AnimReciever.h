@@ -45,11 +45,11 @@ public:
             {
                 if (this->mirrored) //rotate & mirrored
                 {
-                    for (int rep = 0; rep < this->repetitions; ++rep)
+                    for (uint16_t rep = 0; rep < this->repetitions; ++rep)
                     {
                         //determine bounds for repetition
                         const int left_bound = rep * seg_len;
-                        const int right_bound = min((rep + 1) * seg_len, int(this->ledstrip->PixelCount()));
+                        const int right_bound = min(uint16_t((rep + 1) * seg_len), this->ledstrip->PixelCount());
                         const int middle = left_bound + seg_len / 2; //integer truncated
 
                         //shift all pixels outward and replace central pixels
@@ -71,11 +71,11 @@ public:
                 }
                 else // rotate & not mirrored
                 {
-                    for (int rep = 0; rep < this->repetitions; ++rep)
+                    for (uint16_t rep = 0; rep < this->repetitions; ++rep)
                     {
                         //determine bounds for repetition
                         const int left_bound = rep * seg_len;
-                        const int right_bound = min((rep + 1) * seg_len, int(this->ledstrip->PixelCount()));
+                        const int right_bound = min(uint16_t((rep + 1) * seg_len), this->ledstrip->PixelCount());
 
                         //shift all pixels outward and replace leftmost pixels
                         this->ledstrip->RotateRight(this->pixel_stretch * uint16_t(readSize / 3), left_bound,  right_bound-1);
@@ -92,7 +92,7 @@ public:
             }
             else
             { // not rotated
-                for (int i = 1; i + 3 < readSize; i += 4)
+                for (uint16_t i = 1; i + 3 < readSize; i += 4)
                 {
                     const uint8_t index = lightBuffer[i];
 

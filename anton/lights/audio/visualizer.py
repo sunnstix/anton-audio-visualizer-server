@@ -70,7 +70,6 @@ class Visualizer(Pixels):
     # Number of audio samples to read every time frame
     samples_per_frame = int(config.MIC_RATE / config.FPS)
     
-
     def __init__(self, packet_sender, mode_byte):
         Pixels.__init__(self,packet_sender, mode_byte)
         self._time_prev = time.time() * 1000.0
