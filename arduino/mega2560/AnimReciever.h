@@ -16,7 +16,7 @@ public:
         this->pixel_stretch = lightBuffer[2];
         // 2 extra bits for configuration
         this->rotate = bool((lightBuffer[3] & 1));
-        this->mirrored = bool((lightBuffer[3] & 16));
+        this->mirrored = bool((lightBuffer[3])>>7);
         this->zone_width = ledstrip->PixelCount() / (repetitions * (1 + this->mirrored) * this->pixel_stretch);
 //
 //        Serial.print("Repetitions: ");
@@ -96,7 +96,6 @@ public:
                 {
                     const uint8_t index = lightBuffer[i];
 
-                    //assumes 7 bit color values sent and rescale
                     RgbColor pixel = bytesToColor(lightBuffer + i + 1);
 
                     if (index >= this->zone_width)

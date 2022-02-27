@@ -29,6 +29,7 @@ class Pixels():
         self.packet_sender = packet_sender
         self.mode_byte = mode_byte
         self.config_byte = config_byte
+        self.pixel_sweeper = 0
 
     def configure(self):
         self.packet_sender(self.config_byte + self.lightConfig.encode())
@@ -70,7 +71,8 @@ class Pixels():
             # Pixel indices
             idx = range(self.pixels.shape[1])
             idx = [i for i in idx if not np.array_equal(
-                p[:, i], self._prev_pixels[:, i])]
+                p[:, i], self._prev_pixels[:, i]) or self.pixel_sweeper == idx]
+            self.pixel_sweeper = (self.pixel_sweeper+1)%self.regions
             n_packets = len(idx) // MAX_PIXELS_PER_PACKET + 1
             idx = np.array_split(idx, n_packets)
             

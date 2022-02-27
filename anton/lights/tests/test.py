@@ -18,7 +18,7 @@ if __name__ == "__main__":
     pixel_stretch = 2
     rotate = int(True)
     mirrored = int(True)
-    send_arduinos(bytes.fromhex('03') + repetitions.to_bytes(1,'big') + pixel_stretch.to_bytes(1,'big') + ((mirrored << 4) + rotate).to_bytes(1,'big'))
+    send_arduinos(bytes.fromhex('03') + repetitions.to_bytes(1,'big') + pixel_stretch.to_bytes(1,'big') + ((mirrored << 7) + rotate).to_bytes(1,'big'))
     for i in range(0,500,2):
         r,g,b = colorsys.hls_to_rgb(i%100/100.0, 0.5, 1.0)
         r1,g1,b1 = colorsys.hls_to_rgb(i%100/100.0, 0.5, 1.0)

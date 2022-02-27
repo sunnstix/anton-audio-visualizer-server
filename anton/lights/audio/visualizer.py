@@ -65,7 +65,7 @@ class Visualizer():
         if effect == 'scroll':
             self.visualization_effect = ScrollMode(self.packet_sender, self.config_byte, self.mode_byte)
         elif effect == 'energy':
-            self.visualization_effect = EnergyMode(self.packet_sender, self.config_byte, self.mode_byte)
+            self.visualization_effect = EnergyMode(self.packet_sender, self.config_byte, self.mode_byte, 4)
         elif effect == 'spectrum':
             self.visualization_effect = SpectrumMode(self.packet_sender, self.config_byte, self.mode_byte)
         else:
@@ -81,8 +81,8 @@ class Visualizer():
 if __name__ == '__main__':
     from anton.lights.modes import send_arduinos, Lights
     visualizer = Visualizer(send_arduinos,Lights.MODES['audio'].mode_byte, Lights.MODES['audio'].update_byte)
-    visualizer.start('energy')
+    visualizer.start('scroll')
     print('Starting Audio Visualization')
-    time.sleep(30)
+    time.sleep(900)
     print('Stopping thread')
     visualizer.stop()

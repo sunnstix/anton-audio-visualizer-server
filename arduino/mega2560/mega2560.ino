@@ -97,7 +97,6 @@ void loop()
   latestRead = 0;
   if (packetSize)
   {
-    Serial.println("Recieved");
     // read the packet into packetBuffer
     latestRead = Udp.read(packetBuffer, BUFFER_LEN);
     // retrieve light mode from first byte of message
@@ -111,10 +110,8 @@ void loop()
         animator.StartAnimation(new OffAnimation(&ledstrip));
         break;
       case LightMode::SolidMode:
-        if (latestRead == 4) {
-          Serial.println("Solid Mode");
+        if (latestRead == 4)
           animator.StartAnimation(new SolidAnimation(&ledstrip, RgbColor(packetBuffer[1],packetBuffer[2],packetBuffer[3])));
-        }
         break;
       case LightMode::RotateRainbowMode:
         animator.StartAnimation(new RotatingRainbowAnimation(&ledstrip));
@@ -136,7 +133,10 @@ void loop()
       }
 
       //update current mode
-      currMode = packetMode;
+      if (currMode != packetMode) {
+        Serial.println("Changing Mode");
+        currMode = packetMode;
+      }
     }
   }
 

@@ -73,7 +73,6 @@ public:
     new_anim->start();
     anim = new_anim;
     this->_isRunning = true;
-    Serial.println("Starting Anim");
   }
   void StopAnimation()
   {

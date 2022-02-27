@@ -31,7 +31,6 @@ class AudioMode(Pixels):
     samples_per_frame = int(config.MIC_RATE / config.FPS)
 
     def __init__(self, packet_sender: callable, config_byte: bytes, mode_byte: bytes, l_config: LightConfig) -> None:
-        print(type(packet_sender))
         super().__init__(packet_sender, config_byte, mode_byte, l_config)
 
         # Array containing the rolling audio sample window
@@ -43,15 +42,15 @@ class AudioMode(Pixels):
         self.config_byte = config_byte
 
         # Pixel Scaling Config Matrices
-        self.r_filt = dsp.ExpFilter(np.tile(0.01, self.regions // 2),
+        self.r_filt = dsp.ExpFilter(np.tile(0.01, self.regions),
                                     alpha_decay=0.2, alpha_rise=0.99)
-        self.g_filt = dsp.ExpFilter(np.tile(0.01, self.regions // 2),
+        self.g_filt = dsp.ExpFilter(np.tile(0.01, self.regions),
                                     alpha_decay=0.05, alpha_rise=0.3)
-        self.b_filt = dsp.ExpFilter(np.tile(0.01, self.regions // 2),
+        self.b_filt = dsp.ExpFilter(np.tile(0.01, self.regions),
                                     alpha_decay=0.1, alpha_rise=0.5)
-        self.common_mode = dsp.ExpFilter(np.tile(0.01, self.regions // 2),
+        self.common_mode = dsp.ExpFilter(np.tile(0.01, self.regions),
                                          alpha_decay=0.99, alpha_rise=0.01)
-        self.p_filt = dsp.ExpFilter(np.tile(1, (3, self.regions // 2)),
+        self.p_filt = dsp.ExpFilter(np.tile(1, (3, self.regions)),
                                     alpha_decay=0.1, alpha_rise=0.99)
 
     def start(self):
@@ -95,12 +94,11 @@ class AudioMode(Pixels):
     def effect(self, audio) -> np.array:
         raise NotImplementedError
 
-
 class ScrollMode(AudioMode):
-    def __init__(self, packet_sender: callable, config_byte: bytes, mode_byte: bytes, repetitions: int = 1, pixel_stretch: int = 1, mirrored: bool = False) -> None:
+    def __init__(self, packet_sender: callable, config_byte: bytes, mode_byte: bytes, repetitions: int = 4, pixel_stretch: int = 1, mirrored: bool = True) -> None:
         super().__init__(packet_sender, config_byte, mode_byte,
                          LightConfig(repetitions, pixel_stretch, True, mirrored))
-        self.pixel_arr = np.tile(1.0, (3, self.regions))
+        # self.pixel_arr = np.tile(1.0, (3, self.regions))
 
     def effect(self, audio) -> np.array:
         audio = audio**2.0
@@ -111,28 +109,27 @@ class ScrollMode(AudioMode):
         g = int(np.max(audio[len(audio) // 3: 2 * len(audio) // 3]))
         b = int(np.max(audio[2 * len(audio) // 3:]))
         # Scrolling effect window
-        self.pixel_arr[:, 1:] = self.pixel_arr[:, :-1]
-        self.pixel_arr = gaussian_filter1d(0.98 * self.pixel_arr, sigma=0.2)
-        # Create new color originating at the center
-        self.pixel_arr[0, 0] = r
-        self.pixel_arr[1, 0] = g
-        self.pixel_arr[2, 0] = b
+        # self.pixel_arr[:, 1:] = self.pixel_arr[:, :-1]
+        # self.pixel_arr = gaussian_filter1d(0.98 * self.pixel_arr, sigma=0.2)
+        # # Create new color originating at the center
+        # self.pixel_arr[0, 0] = r
+        # self.pixel_arr[1, 0] = g
+        # self.pixel_arr[2, 0] = b
         # Update the LED strip
-        return np.concatenate((self.pixel_arr[:, ::-1], self.pixel_arr), axis=1)
-
+        return np.array([[r],[g],[b]])
 
 class EnergyMode(AudioMode):
     def __init__(self, packet_sender: callable, config_byte: bytes, mode_byte: bytes, repetitions: int = 1, pixel_stretch: int = 1) -> None:
         super().__init__(packet_sender, config_byte, mode_byte,
-                         LightConfig(repetitions, pixel_stretch, False, False))
-        self.pixel_arr = np.tile(1.0, (3, self.regions // 2))
+                         LightConfig(repetitions, pixel_stretch, False, True))
+        self.pixel_arr = np.tile(1.0, (3, self.regions))
 
     def effect(self, audio) -> np.array:
         audio = np.copy(audio)
         self.gain.update(audio)
         audio /= self.gain.value
         # Scale by the width of the LED strip
-        audio *= float((config.N_PIXELS // 2) - 1)
+        audio *= float((self.regions) - 1)
         # Map color channels according to energy in the different freq bands
         scale = 0.9
         r = int(np.mean(audio[:len(audio) // 3]**scale))
@@ -155,17 +152,16 @@ class EnergyMode(AudioMode):
         self.pixel_arr[2, :] = gaussian_filter1d(
             self.pixel_arr[2, :], sigma=4.0)
         # Set the new pixel value
-        return np.concatenate((self.pixel_arr[:, ::-1], self.pixel_arr), axis=1)
-
+        return self.pixel_arr
 
 class SpectrumMode(AudioMode):
     def __init__(self, packet_sender: callable, config_byte: bytes, mode_byte: bytes, repetitions: int = 1, pixel_stretch: int = 1) -> None:
         super().__init__(packet_sender, config_byte, mode_byte,
-                         LightConfig(repetitions, pixel_stretch, False, False))
-        self._prev_spectrum = np.tile(0.01, self.regions // 2)
+                         LightConfig(repetitions, pixel_stretch, False, True))
+        self._prev_spectrum = np.tile(0.01, self.regions)
 
     def effect(self, audio) -> np.array:
-        audio = np.copy(interpolate(audio, self.regions // 2))
+        audio = np.copy(interpolate(audio, self.regions))
         self.common_mode.update(audio)
         diff = audio - self._prev_spectrum
         self._prev_spectrum = np.copy(audio)
@@ -173,10 +169,7 @@ class SpectrumMode(AudioMode):
         r = self.r_filt.update(audio - self.common_mode.value)
         g = np.abs(diff)
         b = self.b_filt.update(np.copy(audio))
-        # Mirror the color channels for symmetric output
-        r = np.concatenate((r[::-1], r))
-        g = np.concatenate((g[::-1], g))
-        b = np.concatenate((b[::-1], b))
+        print(r,g,b)
         return np.array([r, g, b]) * 255
 
 

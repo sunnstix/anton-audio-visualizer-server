@@ -3,7 +3,7 @@ import os
 
 ARDUINO_IPS = ['10.0.0.248']
 """IP addresses of the ESP8266s. Must match IP in ws2812_controller.ino"""
-UDP_PORT = 6969
+UDP_PORT = 5020
 """Chosen Port number used for socket communication between Python and ESP8266"""
 SOFTWARE_GAMMA_CORRECTION = False
 """Set to False because the firmware handles gamma correction + dither"""
@@ -14,7 +14,7 @@ USE_GUI = False
 DISPLAY_FPS = False
 """Whether to display the FPS when running (can reduce performance)"""
 
-N_PIXELS = 60
+N_PIXELS = 280
 """Number of pixels in the LED strip (must match ESP8266 firmware)"""
 
 GAMMA_TABLE_PATH = os.path.join(os.path.dirname(__file__), 'audio/gamma_table.npy')
@@ -23,7 +23,7 @@ GAMMA_TABLE_PATH = os.path.join(os.path.dirname(__file__), 'audio/gamma_table.np
 MIC_RATE = 48000
 """Sampling frequency of the microphone in Hz"""
 
-FPS = 15
+FPS = 30
 """Desired refresh rate of the visualization (frames per second)
 
 FPS indicates the desired refresh rate, or frames-per-second, of the audio
