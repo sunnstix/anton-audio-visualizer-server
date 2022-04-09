@@ -22,7 +22,7 @@
     "webpack-cli": "^4.7.0"
   },
   "dependencies": {
-    "moment": "2.29.1",
+    "moment": "2.29.2",
     "npm-check-updates": "^11.5.13",
     "prop-types": "15.7.2",
     "react": "17.0.2",
