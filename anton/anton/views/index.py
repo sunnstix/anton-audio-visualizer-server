@@ -11,5 +11,4 @@ def show_index():
         context = {
             'light_modes': proxy.list_modes(),
         }
-        print(context)
-    return flask.render_template("index.html", **context)
+        return flask.render_template("index.html", **context)
