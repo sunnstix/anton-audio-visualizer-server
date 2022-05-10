@@ -1,0 +1,10 @@
+#!/bin/bash
+set -Eeuo pipefail
+
+# Stop on errors
+# See https://vaneyckt.io/posts/safer_bash_scripts_with_set_euxo_pipefail/
+
+export FLASK_DEBUG=True
+export FLASK_APP=anton
+export ANTON_SETTINGS=config.py
+python anton/lights/CommServer.py & flask run --host 0.0.0.0 --port 6969 && fg

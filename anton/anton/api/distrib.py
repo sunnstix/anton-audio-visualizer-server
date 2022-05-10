@@ -1,9 +1,10 @@
 import json
 import anton
-from anton.lights.modes import RgbColor, Lights
+from anton.lights.rgb import RgbColor
 from flask import make_response, jsonify, request, abort
+from xmlrpc.client import ServerProxy
+from anton.lights.config import RPC_PORT
 
-lights = Lights()
 
 @anton.app.route('/api/')
 def api():
@@ -28,28 +29,24 @@ def not_found(error):
 # =======================================================
 @anton.app.route('/api/modes/', methods=['GET'])
 def get_light_modes():
-    print('FUCK')
-    return jsonify(
-        {
-            'modes': Lights.list_modes(), 
-            'current_mode': lights.get_current_mode(),
-            'current_submode': lights.get_current_submode(),
-            'current_color': lights.get_current_color(),
-            'url': request.path
-        })
+    with ServerProxy("http://localhost:"+str(RPC_PORT)+"/", allow_none=True) as proxy:
+        return jsonify(
+            {
+                'modes': proxy.list_modes(), 
+                'current_mode': proxy.get_current_mode(),
+                'current_color': proxy.get_current_color(),
+                'url': request.path
+            })
 
 @anton.app.route('/api/modes/', methods=['POST'])
 def set_light_mode():
-    lights.set_mode(**request.json)
-    return jsonify({'mode':lights.get_current_mode(),'url':request.path})
+    with ServerProxy("http://localhost:"+str(RPC_PORT)+"/", allow_none=True) as proxy:
+        proxy.set_mode(request.json['mode'],request.json.get('color',None))
+    with ServerProxy("http://localhost:"+str(RPC_PORT)+"/", allow_none=True) as proxy:
+        return jsonify({'mode':proxy.get_current_mode(),'url':request.path})
 
 @anton.app.route('/api/modes/<string:mode>/', methods=['GET','POST']) #debug route
 def set_lights(mode):
-    lights.set_mode(mode, **request.args)
-    return jsonify({'mode':mode,'url':request.path})
-
-# Arduino Updates
-# =======================================================
-@anton.app.route('/arduino/',methods=['POST'])
-def arduino_boot():
-    pass
+    with ServerProxy("http://localhost:"+str(RPC_PORT)+"/", allow_none=True) as proxy:
+        proxy.set_mode(mode, **request.args)
+        return jsonify({'mode':mode,'url':request.path})

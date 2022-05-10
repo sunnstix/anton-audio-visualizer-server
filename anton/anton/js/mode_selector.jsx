@@ -5,11 +5,10 @@ class Modes extends React.Component {
 
     constructor(props) {
         super(props);
-        this.state = { modes: {}, currentMode: '', currentSubMode: '', currentColor: '', enableColor: false, enableSubMode: false};
+        this.state = { modes: {}, currentMode: '', currentColor: '', enableColor: false};
 
         this.handleModeChange = this.handleModeChange.bind(this);
         this.handleColorChange = this.handleColorChange.bind(this);
-        this.handleSubModeChange = this.handleSubModeChange.bind(this);
     }
 
     componentDidMount() {
@@ -25,31 +24,28 @@ class Modes extends React.Component {
                 this.setState({ 
                     modes: data.modes,
                     currentMode: data.current_mode,
-                    currentSubMode: data.current_submode,
                     currentColor: data.current_color,
-                    enableColor: data.modes[data.current_mode]['color'],
-                    enableSubMode: (data.modes[data.current_mode]['submodes'].length !== 0)
+                    enableColor: data.modes[data.current_mode]['color']
                 })
             })
             .catch((error) => console.log(error));
+
+        console.log(this.state)
     }
 
     handleModeChange(event) {
         const { api } = this.props;
         const { modes, currentColor } = this.state;
-        const {color, submodes } = modes[event.target.value]
+        const {color} = modes[event.target.value]
         
 
         const stateUpdate = {
             currentMode: event.target.value,
-            ...((submodes.length !== 0) && {currentSubMode: submodes[0]}),
-            enableSubMode: (submodes.length !== 0),
             enableColor: color,
         }
 
         const message = {
             'mode': event.target.value,
-            ...((submodes.length !== 0) && {'submode': submodes[0]}),
             ...((color) && {'color': currentColor})
         }
 
@@ -67,12 +63,11 @@ class Modes extends React.Component {
 
     handleColorChange(event) {
         const { api } = this.props;
-        const {currentMode, currentSubMode, enableSubMode } = this.state;
+        const {currentMode} = this.state;
 
         const message = {
             'mode': currentMode,
             'color': event.target.value,
-            ...(enableSubMode && {'submode': currentSubMode})
         };
 
         fetch(api, {
@@ -87,30 +82,8 @@ class Modes extends React.Component {
         this.setState({currentColor: event.target.value});
     }
 
-    handleSubModeChange(event) {
-        const { api } = this.props;
-        const {currentMode, currentColor, enableColor} = this.state;
-
-        const message = {
-            'mode': currentMode,
-            'submode': event.target.value,
-            ...(enableColor && {'color': currentColor})
-        };
-
-        fetch(api, {
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            method: 'POST',
-            body: JSON.stringify(message)
-        });
-
-        this.setState({currentSubMode: event.target.value});
-    }
-
     render() {
-        const {currentMode, currentColor, currentSubMode, modes, enableColor, enableSubMode} = this.state;
+        const {currentMode, currentColor, modes, enableColor,} = this.state;
         return (
             <div className = "mode_select">
                 <div>
@@ -130,19 +103,6 @@ class Modes extends React.Component {
                             <input type="color" value={currentColor} onChange={this.handleColorChange}></input>
                         </label>
                     </div>
-                }
-                {enableSubMode &&
-                    <div>
-                        <label>
-                            Secondary Modes: 
-                            <select value={currentSubMode} onChange={this.handleSubModeChange}>
-                                {modes[currentMode]['submodes'].map((mode) => (
-                                    <option key={mode} value={mode}>{mode}</option>
-                                ))}
-                            </select> 
-                        </label>
-                    </div>
-
                 }
             </div>
         );

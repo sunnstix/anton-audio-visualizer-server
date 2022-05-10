@@ -1,16 +1,14 @@
 """Settings for audio reactive LED strip"""
 import os
 
-ARDUINO_IPS = ['10.0.0.248']
-"""IP addresses of the ESP8266s. Must match IP in ws2812_controller.ino"""
-UDP_PORT = 5020
+TCP_PORT = 5000
+UDP_PORT = 5001
+RPC_PORT = 5002
 """Chosen Port number used for socket communication between Python and ESP8266"""
 SOFTWARE_GAMMA_CORRECTION = False
 """Set to False because the firmware handles gamma correction + dither"""
-
 USE_GUI = False
 """Whether or not to display a PyQtGraph GUI plot of visualization"""
-
 DISPLAY_FPS = False
 """Whether to display the FPS when running (can reduce performance)"""
 
