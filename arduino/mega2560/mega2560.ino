@@ -14,11 +14,11 @@ SoftwareSerial Serial3(6, 7); // RX, TX
 // local port to listen on
 #define PORT 5020
 // Set to the number of LEDs in your LED strip
-#define NUM_LEDS 280
+#define NUM_LEDS 600
 // Maximum number of packet bytes to hold in the buffer. Don't change this.
 #define BUFFER_LEN 1024
 // LED Pin
-#define LED_PIN 6
+#define LED_PIN 9
 
 // Wifi Information (Never Going to reuse this password or ssid)
 const char ssid[] = "RalphsDaycare"; // your network SSID (name)
@@ -64,8 +64,9 @@ void setup()
   
 
   ledstrip.Begin();
+  ledstrip.SetBrightness(128);
   currMode = LightMode::OffMode;
-  animator.StartAnimation(new OffAnimation(&ledstrip));
+  animator.StartAnimation(new RotatingRainbowAnimation(&ledstrip));
 
   // attempt to connect to WiFi network
   while (status != WL_CONNECTED)

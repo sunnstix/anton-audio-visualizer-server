@@ -16,7 +16,7 @@ setup(
         'numpy', 
         'pyaudio', 
         'pyqtgraph', 
-        'scipy==1.4.1',
+        'scipy',
     ],
     python_requires='>=3.6',
 )

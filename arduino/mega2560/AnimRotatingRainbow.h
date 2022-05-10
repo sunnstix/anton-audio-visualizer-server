@@ -6,7 +6,7 @@
 class RotatingRainbowAnimation : public Animation
 {
 public:
-    RotatingRainbowAnimation(LedStrip* led) : Animation(led, 10) {} //update rotating rainbow every 10ms (should be adjusted for speed setting)
+    RotatingRainbowAnimation(LedStrip* led) : Animation(led, 0) {} //update rotating rainbow every 10ms (should be adjusted for speed setting)
     RotatingRainbowAnimation(LedStrip* led, uint16_t duration) : Animation(led, duration) {}
     void update() override
     {
