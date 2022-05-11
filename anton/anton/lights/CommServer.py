@@ -9,7 +9,6 @@ import anton.lights.modes.strobeMode
 from anton.lights.config import RPC_PORT
 
 from xmlrpc.server import SimpleXMLRPCServer
-from xmlrpc.server import SimpleXMLRPCRequestHandler
 
 def main():
     # Create server

@@ -7,4 +7,5 @@ set -Eeuom pipefail
 export FLASK_DEBUG=True
 export FLASK_APP=anton
 export ANTON_SETTINGS=config.py
-python anton/lights/CommServer.py & flask run --host 0.0.0.0 --port 6969 && fg
+
+python anton/lights/CommServer.py & flask run --host 0.0.0.0 --port 5050 && fg

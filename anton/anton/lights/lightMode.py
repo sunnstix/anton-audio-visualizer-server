@@ -1,10 +1,14 @@
+from enum import Enum
+
+class ModeCode(Enum):
+    OFF = 0
+    RAINBOW = 1
+    SOLID = 2
+    STROBE = 3
+    RECIEVER = 4
+
 class LightMode:
-    MODEIDS = set()
     def __init__(self, modeId : int, uses_color : bool = False):
-        if modeId in LightMode.MODEIDS:
-            raise Exception("Duplicate Mode ID:",modeId)
-        else:
-            LightMode.MODEIDS.add(modeId)
         self.modeId = modeId
         self.color_dep = uses_color
         
@@ -12,7 +16,7 @@ class LightMode:
         return self.color_dep
     
     def get_mode_byte(self) -> bytes:
-        return str(self.modeId).encode('utf-8')
+        return self.modeId.to_bytes(1,'big')
     
     def start(self,**kwargs) -> bytes:
         raise NotImplementedError
