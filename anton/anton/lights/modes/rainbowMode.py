@@ -9,7 +9,7 @@ class Rainbow(LightMode):
     def encode_config(self, config):
         return b''
     
-    def initialize(self):
+    def start(self):
         pass
         
     def stop(self):

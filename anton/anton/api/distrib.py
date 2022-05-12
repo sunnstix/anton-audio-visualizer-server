@@ -3,6 +3,7 @@ from flask import make_response, jsonify, request
 from xmlrpc.client import ServerProxy
 from anton.lights.config import RPC_PORT
 
+LIGHTAPP = "http://localhost:"+str(RPC_PORT)+"/"
 
 @anton.app.route('/api/')
 def api():
@@ -27,24 +28,24 @@ def not_found(error):
 # =======================================================
 @anton.app.route('/api/modes/', methods=['GET'])
 def get_light_modes():
-    with ServerProxy("http://localhost:"+str(RPC_PORT)+"/", allow_none=True) as proxy:
+    with ServerProxy(LIGHTAPP, allow_none=True) as proxy:
         return jsonify(
             {
                 'modes': proxy.list_modes(), 
-                'current_mode': proxy.get_current_mode(),
-                'current_color': proxy.get_current_color(),
+                'current_mode': proxy.get_mode(),
+                'current_config': proxy.get_config(),
                 'url': request.path
             })
 
 @anton.app.route('/api/modes/', methods=['POST'])
 def set_light_mode():
-    with ServerProxy("http://localhost:"+str(RPC_PORT)+"/", allow_none=True) as proxy:
-        proxy.set_mode(request.json['mode'],request.json.get('color',None))
-    with ServerProxy("http://localhost:"+str(RPC_PORT)+"/", allow_none=True) as proxy:
+    with ServerProxy(LIGHTAPP, allow_none=True) as proxy:
+        proxy.set_mode(request.json['mode'])
+    with ServerProxy(LIGHTAPP, allow_none=True) as proxy:
         return jsonify({'mode':proxy.get_current_mode(),'url':request.path})
 
 @anton.app.route('/api/modes/<string:mode>/', methods=['GET','POST']) #debug route
 def set_lights(mode):
-    with ServerProxy("http://localhost:"+str(RPC_PORT)+"/", allow_none=True) as proxy:
+    with ServerProxy(LIGHTAPP, allow_none=True) as proxy:
         proxy.set_mode(mode, **request.args)
         return jsonify({'mode':mode,'url':request.path})

@@ -14,15 +14,15 @@ def main():
     with SimpleXMLRPCServer(('localhost', RPC_PORT), allow_none=True) as server:
         server.register_introspection_functions()
 
-        # Register pow() function; this will use the value of
-        # pow.__name__ as the name, which is just 'pow'.
-        server.register_function(LightServer.get_config,'get_config')
-        server.register_function(LightServer.get_current_mode,'get_current_mode')
+        # Register LightServer functions
         server.register_function(LightServer.list_modes,'list_modes')
+        server.register_function(LightServer.get_mode,'get_mode')
         server.register_function(LightServer.set_mode,'set_mode')
+        server.register_function(LightServer.get_config,'get_config')
+        server.register_function(LightServer.set_config,'set_config')
     
         # Run the server's main loop
-        print('Serving XML-RPC on localhost port', RPC_PORT)
+        print('Serving LightApp on localhost port', RPC_PORT)
         try:
             server.serve_forever()
         except KeyboardInterrupt:

@@ -31,16 +31,18 @@ class LightMode:
     def encode(self) -> bytes:
         return self.modeByte + self.encode_config(self.config)
     
-    def start(self, options) -> bytes:
-        self.config = options
-        self.initialize()
+    def set_config(self, config : LightConfig):
+        if config.keys() != self.config.keys():
+            raise RuntimeWarning("Invalid config: " + str(config))
+        else:
+            self.config = config
     
     @abc.abstractmethod
     def encode_config(self, config) -> bytes:
         raise NotImplementedError
     
     @abc.abstractmethod
-    def initialize(self):
+    def start(self):
         raise NotImplementedError
     
     @abc.abstractmethod
