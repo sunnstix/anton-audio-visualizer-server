@@ -4,6 +4,8 @@ class RgbColor:
             self.r, self.g, self.b = tuple(int(args[0].lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
         elif len(args) == 3:
             self.r, self.g, self.b = args
+        elif len(args) == 0:
+            self.r, self.g, self.b = 0,0,0
         
         if self.r is None or self.g is None or self.g is None:
             raise ValueError

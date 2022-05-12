@@ -5,11 +5,13 @@ from anton.lights.lightServer import register_mode, init_light_mode
 @register_mode
 class StrobeMode(LightMode):
     def __init__(self):
-        super().__init__(ModeCode.STROBE, uses_color = True)
+        super().__init__(ModeCode.STROBE, config={'color':RgbColor()})
     
-    @init_light_mode    
-    def start(self, **kwargs):
-        return RgbColor(kwargs['color']).to_bytes()
+    def encode_config(self, config):
+        return RgbColor(config['color']).to_bytes()
+    
+    def initialize(self):
+        pass
         
     def stop(self):
         pass

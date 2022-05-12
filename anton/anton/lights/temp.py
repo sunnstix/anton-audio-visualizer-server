@@ -1,14 +1,13 @@
+from anton.lights.config import RPC_PORT
+from xmlrpc.server import SimpleXMLRPCServer
 import sys
+
 from anton.lights.lightServer import LightServer
 
 import anton.lights.modes.offMode
 import anton.lights.modes.rainbowMode
 import anton.lights.modes.solidMode
 import anton.lights.modes.strobeMode
-
-from anton.lights.config import RPC_PORT
-
-from xmlrpc.server import SimpleXMLRPCServer
 
 def main():
     # Create server
@@ -17,7 +16,7 @@ def main():
 
         # Register pow() function; this will use the value of
         # pow.__name__ as the name, which is just 'pow'.
-        server.register_function(LightServer.get_current_color,'get_current_color')
+        server.register_function(LightServer.get_config,'get_config')
         server.register_function(LightServer.get_current_mode,'get_current_mode')
         server.register_function(LightServer.list_modes,'list_modes')
         server.register_function(LightServer.set_mode,'set_mode')

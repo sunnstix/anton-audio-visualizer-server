@@ -1,7 +1,5 @@
-import json
 import anton
-from anton.lights.rgb import RgbColor
-from flask import make_response, jsonify, request, abort
+from flask import make_response, jsonify, request
 from xmlrpc.client import ServerProxy
 from anton.lights.config import RPC_PORT
 
